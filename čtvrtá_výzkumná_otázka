@@ -1,6 +1,7 @@
 -- 4) Existuje rok, ve kterém byl meziroční nárůst cen potravin výrazně vyšší než růst mezd (rozdíl > 10 %)?
+
 WITH yearly_averages AS (
-    -- Nejdříve získáme průměrnou mzdu a průměrnou cenu za celou ČR pro každý rok
+    -- První získáme průměrnou mzdu a průměrnou cenu za celou ČR pro každý rok
     SELECT 
         payroll_year,
         ROUND(AVG(average_salary)) AS avg_payroll,
@@ -27,5 +28,6 @@ SELECT
     price_growth_pct,
     (price_growth_pct - payroll_growth_pct) AS growth_diff
 FROM yearly_growth
-WHERE prev_payroll IS NOT NULL -- Odstraníme první rok
+WHERE prev_payroll IS NOT NULL 
+-- Opět odstraníme první rok (nemá srovnání s minulostí)
 ORDER BY payroll_year;
