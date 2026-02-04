@@ -1,0 +1,69 @@
+-- Odstranění staré tabulky, pokud existuje
+DROP TABLE IF EXISTS t_jiri_holek_project_sql_primary_final;
+
+-- Vytvoření nové tabulky
+CREATE TABLE t_jiri_holek_project_sql_primary_final AS 
+WITH avg_payroll AS (
+    SELECT 
+        cpib.name AS industry_name,
+        cp.industry_branch_code,
+        cp.payroll_year,
+        ROUND(AVG(cp.value)::numeric, 2) AS average_salary
+    FROM czechia_payroll cp
+    LEFT JOIN czechia_payroll_industry_branch cpib
+        ON cpib.code = cp.industry_branch_code
+    WHERE cp.value_type_code = 5958 -- Průměrná mzda
+      AND cp.calculation_code = 200 -- Přepočtený počet zaměstnanců
+      AND cp.industry_branch_code IS NOT NULL -- Odstraní záznamy bez odvětví (celorepublikový průměr)
+    GROUP BY 
+        cpib.name,
+        cp.industry_branch_code,
+        cp.payroll_year
+),
+food_price AS (
+    SELECT 
+        cpc.name AS food_name,
+        cp.category_code,
+        EXTRACT(YEAR FROM cp.date_from) AS price_year, -- V Postgres/DBeaver je EXTRACT nebo DATE_PART jistota
+        ROUND(AVG(cp.value)::numeric, 2) AS average_price
+    FROM czechia_price cp
+    LEFT JOIN czechia_price_category cpc
+        ON cp.category_code = cpc.code
+    GROUP BY
+        cpc.name,
+        cp.category_code,
+        price_year
+)
+SELECT 
+    ap.*,
+    fp.food_name,
+    fp.category_code,
+    fp.average_price
+FROM avg_payroll ap
+-- Používáme JOIN (nebo LEFT JOIN), aby nám zůstaly jen roky, kdy máme data pro obojí
+JOIN food_price fp
+    ON fp.price_year = ap.payroll_year;
+
+DROP TABLE IF EXISTS t_jiri_holek_project_sql_secondary_final;
+
+CREATE TABLE t_jiri_holek_project_sql_secondary_final AS 
+SELECT
+    e.country,
+    e.year,
+    e.gdp,
+    e.gini, -- Gini koeficient je v zadání výslovně zmíněn
+    e.population,
+    -- Výpočet meziroční změny HDP v procentech pro každý stát zvlášť
+    ROUND(
+        ((e.gdp - LAG(e.gdp) OVER (PARTITION BY e.country ORDER BY e.year)) / 
+        LAG(e.gdp) OVER (PARTITION BY e.country ORDER BY e.year) * 100)::numeric, 
+    2) AS gdp_percentage_change
+FROM
+    economies e
+JOIN countries c 
+    ON e.country = c.country
+WHERE 
+    c.continent = 'Europe' -- Zadání chce evropské státy
+    AND e.year BETWEEN 2006 AND 2018 -- Období odpovídající primární tabulce
+ORDER BY
+    e.country, e.year;
