@@ -1,0 +1,19 @@
+-- 2) Kolik je možné si koupit litrů mléka a kilogramů chleba za první a poslední srovnatelné období?
+  
+WITH boundary_years AS (
+    SELECT 
+        MIN(payroll_year) AS min_year, 
+        MAX(payroll_year) AS max_year
+    FROM t_jiri_holek_project_sql_primary_final
+)
+SELECT 
+    payroll_year,
+    food_name,
+    ROUND(AVG(average_salary)) AS avg_salary,
+    average_price,
+    FLOOR(AVG(average_salary) / average_price) AS affordable_units
+FROM t_jiri_holek_project_sql_primary_final
+WHERE (food_name LIKE '%Chléb%' OR food_name LIKE '%Mléko%')
+  AND payroll_year IN (SELECT min_year FROM boundary_years UNION SELECT max_year FROM boundary_years)
+GROUP BY payroll_year, food_name, average_price
+ORDER BY food_name, payroll_year;
