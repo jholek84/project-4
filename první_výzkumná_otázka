@@ -1,5 +1,5 @@
 -- 1) Rostou v průběhu let mzdy ve všech odvětvích, nebo v některých klesají?
--- Tento dotaz vytvoří přehled meziročních změn pro každé odvětví.
+-- Tabulka zobrazí přehled meziročních změn pro každé odvětví.
 
 SELECT 
     industry_name,
@@ -11,14 +11,14 @@ SELECT
     -- Výpočet procentuálního růstu/poklesu
     ROUND(((average_salary - prev_year_salary) / prev_year_salary * 100)::numeric, 2) AS growth_percentage
 FROM (
-    -- Poddotaz vybere unikátní mzdy pro každé odvětví a rok a přidá hodnotu z předchozího roku
+    -- Specifikace unikátní mzdy pro každé odvětví a rok a hodnoty z předchozího roku
     SELECT 
         industry_name,
         payroll_year,
         average_salary,
         LAG(average_salary) OVER (PARTITION BY industry_name ORDER BY payroll_year) AS prev_year_salary
     FROM (
-        -- Musíme použít DISTINCT, protože v primární tabulce jsou data znásobená o potraviny
+        -- Příkaz DISTINCT, protože v primární tabulce jsou data znásobená
         SELECT DISTINCT 
             industry_name, 
             payroll_year, 
@@ -26,5 +26,7 @@ FROM (
         FROM t_jiri_holek_project_sql_primary_final
     ) sub_distinct
 ) sub_lag
-WHERE prev_year_salary IS NOT NULL -- Odstraní první roky, které nemají s čím porovnávat
-ORDER BY growth_percentage ASC; -- Seřadí od největších poklesů po největší růsty
+WHERE prev_year_salary IS NOT NULL 
+-- Odstraní první roky, které nelze s ničím porovnat
+ORDER BY growth_percentage ASC; 
+-- Seřadí od největších poklesů po největší růsty
