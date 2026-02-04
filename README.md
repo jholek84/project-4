@@ -1,6 +1,6 @@
 Cíle projektu v SQL: Cíl projektu byl vytvořit podklady pro odpovědi pěti výzkumných otázek týkajících se dostupnosti základních potravin ve vztahu k cenám a HDP.
 
-V souboru tabulka_1_a_tabulka_2 jsou SQL skripty pro tvorbu dvou základních tabulek. Z nichse poté čerpaly podklady pro odpovědi výzkumných otázek.
+V souboru tabulka_1_a_tabulka_2 jsou SQL skripty pro tvorbu dvou základních tabulek. Z nich se poté čerpaly podklady pro odpovědi výzkumných otázek.
 
 SQL skripty použité pro zodpovězené jednotlivých otázek jsou pro každou otázku samostatně.
 
