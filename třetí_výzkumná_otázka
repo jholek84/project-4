@@ -1,0 +1,26 @@
+-- 3) Která kategorie potravin zdražuje nejpomaleji?
+
+SELECT 
+    food_name,
+    -- Průměr ze všech meziročních změn v procentech
+    ROUND(AVG(yearly_percentage_change)::numeric, 2) AS average_yearly_growth_pct
+FROM (
+    SELECT 
+        food_name,
+        payroll_year,
+        average_price,
+        -- Výpočet procentuální změny oproti předchozímu roku pomocí LAG
+        ((average_price - LAG(average_price) OVER (PARTITION BY food_name ORDER BY payroll_year)) / 
+        LAG(average_price) OVER (PARTITION BY food_name ORDER BY payroll_year) * 100) AS yearly_percentage_change
+    FROM (
+        -- Musíme vzít unikátní záznamy potravin a let z tvé primární tabulky
+        SELECT DISTINCT 
+            food_name, 
+            payroll_year, 
+            average_price 
+        FROM t_jiri_holek_project_sql_primary_final
+    ) sub_prices
+) sub_calc
+WHERE yearly_percentage_change IS NOT NULL -- Odstraníme první roky (nemají předchůdce)
+GROUP BY food_name
+ORDER BY average_yearly_growth_pct ASC; -- Seřadíme od nejnižšího růstu (nejpomalejší zdražování)
